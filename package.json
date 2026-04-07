@@ -1,0 +1,129 @@
+{
+  "name": "lexentia-vs",
+  "displayName": "lexentia vs",
+  "description": "ai coding assistant for vscode",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "machine-learning",
+    "programming-languages",
+    "debuggers"
+  ],
+  "activationEvents": [
+    "*",
+    "onCommand:lexentia.openChat",
+    "onView:lexentia.sidebar"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "lexentia.openChat",
+        "title": "open chat",
+        "category": "lexentia"
+      },
+      {
+        "command": "lexentia.explainLine",
+        "title": "explain line",
+        "category": "lexentia"
+      },
+      {
+        "command": "lexentia.fixLine",
+        "title": "fix line",
+        "category": "lexentia"
+      },
+      {
+        "command": "lexentia.newTerminal",
+        "title": "new terminal",
+        "category": "lexentia"
+      }
+    ],
+    "views": {
+      "lexentia": [
+        {
+          "type": "webview",
+          "id": "lexentia.sidebar",
+          "name": "chat",
+          "when": "true"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "lexentia",
+          "title": "lexentia",
+          "icon": "$(comment-discussion)"
+        }
+      ]
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "lexentia.explainLine",
+          "group": "lexentia@1",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "lexentia.fixLine",
+          "group": "lexentia@2",
+          "when": "editorHasSelection"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "lexentia",
+      "properties": {
+        "lexentia.model.provider": {
+          "type": "string",
+          "enum": ["ollama", "openai-compatible"],
+          "default": "ollama",
+          "description": "model provider"
+        },
+        "lexentia.model.baseUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:11434",
+          "description": "base url for model api"
+        },
+        "lexentia.model.name": {
+          "type": "string",
+          "default": "llama3.1",
+          "description": "model name"
+        },
+        "lexentia.model.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "api key for openai-compatible providers"
+        },
+        "lexentia.model.modelPreset": {
+          "type": "string",
+          "default": "custom",
+          "description": "predefined model preset id"
+        },
+        "lexentia.model.customSystemPrompt": {
+          "type": "string",
+          "default": "",
+          "description": "optional custom system prompt override"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "@types/node": "20.x",
+    "typescript": "^5.4.5",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^7.11.0",
+    "@typescript-eslint/parser": "^7.11.0"
+  }
+}

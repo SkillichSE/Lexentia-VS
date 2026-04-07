@@ -1,0 +1,121 @@
+:root {
+    --container-padding: 12px;
+    --input-padding: 8px 12px;
+}
+
+body {
+    padding: 0 var(--container-padding);
+}
+
+.section {
+    margin: 12px 0;
+}
+
+button {
+    border: none;
+    padding: var(--input-padding);
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    cursor: pointer;
+    border-radius: 2px;
+    width: 100%;
+    margin: 4px 0;
+}
+
+button:hover {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+h3 {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--vscode-descriptionForeground);
+    margin: 8px 0;
+}
+
+#fileList {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.file-item {
+    padding: 4px 8px;
+    cursor: pointer;
+    border-radius: 2px;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-item:hover {
+    background-color: var(--vscode-list-hoverBackground);
+    color: var(--vscode-list-hoverForeground);
+}
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 12px 0;
+}
+
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.message {
+    margin: 8px 0;
+    padding: 8px 12px;
+    border-radius: 4px;
+    max-width: 90%;
+}
+
+.message.user {
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    align-self: flex-end;
+    margin-left: auto;
+}
+
+.message.assistant {
+    background-color: var(--vscode-editor-inactiveSelectionBackground);
+    border: 1px solid var(--vscode-panel-border);
+}
+
+.input-area {
+    display: flex;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--vscode-panel-border);
+}
+
+.input-area input {
+    flex: 1;
+    padding: var(--input-padding);
+    border: 1px solid var(--vscode-input-border);
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border-radius: 2px;
+}
+
+.input-area input:focus {
+    outline: none;
+    border-color: var(--vscode-focusBorder);
+}
+
+.thinking {
+    color: var(--vscode-descriptionForeground);
+    font-style: italic;
+}
+
+.error {
+    color: var(--vscode-errorForeground);
+    background-color: var(--vscode-inputValidation-errorBackground);
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin: 8px 0;
+}

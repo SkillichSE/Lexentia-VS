@@ -1,0 +1,173 @@
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+#root {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 12px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    margin-bottom: 12px;
+}
+
+.header h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.header button {
+    width: auto;
+    padding: 4px 12px;
+    font-size: 12px;
+}
+
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 8px 0;
+}
+
+.message {
+    padding: 10px 14px;
+    border-radius: 6px;
+    max-width: 85%;
+    word-wrap: break-word;
+}
+
+.message.user {
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    align-self: flex-end;
+    margin-left: auto;
+}
+
+.message.assistant {
+    background-color: var(--vscode-editor-inactiveSelectionBackground);
+    border: 1px solid var(--vscode-panel-border);
+    align-self: flex-start;
+}
+
+.message.thinking {
+    background-color: transparent;
+    border: 1px dashed var(--vscode-panel-border);
+    color: var(--vscode-descriptionForeground);
+    font-style: italic;
+}
+
+.message.error {
+    background-color: var(--vscode-inputValidation-errorBackground);
+    border: 1px solid var(--vscode-inputValidation-errorBorder);
+    color: var(--vscode-errorForeground);
+}
+
+.input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--vscode-panel-border);
+}
+
+.input-row {
+    display: flex;
+    gap: 8px;
+}
+
+#messageInput {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--vscode-input-border);
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border-radius: 4px;
+    resize: none;
+    min-height: 40px;
+    max-height: 120px;
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+}
+
+#messageInput:focus {
+    outline: none;
+    border-color: var(--vscode-focusBorder);
+}
+
+#sendBtn {
+    width: auto;
+    padding: 10px 20px;
+    align-self: flex-end;
+}
+
+.tool-result {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background-color: var(--vscode-textCodeBlock-background);
+    border-radius: 4px;
+    font-family: var(--vscode-editor-font-family);
+    font-size: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.tool-result.success {
+    border-left: 3px solid var(--vscode-testing-iconPassed);
+}
+
+.tool-result.error {
+    border-left: 3px solid var(--vscode-testing-iconFailed);
+}
+
+.settings-panel {
+    display: none;
+    position: absolute;
+    top: 50px;
+    right: 12px;
+    background-color: var(--vscode-dropdown-background);
+    border: 1px solid var(--vscode-dropdown-border);
+    border-radius: 4px;
+    padding: 16px;
+    min-width: 280px;
+    z-index: 100;
+}
+
+.settings-panel.visible {
+    display: block;
+}
+
+.settings-panel h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+.setting {
+    margin-bottom: 12px;
+}
+
+.setting label {
+    display: block;
+    font-size: 11px;
+    margin-bottom: 4px;
+    color: var(--vscode-descriptionForeground);
+}
+
+.setting input, .setting select {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--vscode-input-border);
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border-radius: 2px;
+}
