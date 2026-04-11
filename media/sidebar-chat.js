@@ -2,28 +2,94 @@
     const vscode = acquireVsCodeApi()
 
     let messages = []
-    let tabs = [{ id: 1, title: 'Chat 1', active: true }]
-    let nextTabId = 2
     let pendingChanges = { files: 0, added: 0, removed: 0 }
+    let streamingContent = ''
+    let isStreaming = false
 
     const root = document.getElementById('root')
     renderApp()
 
     function renderApp() {
         root.innerHTML = `
-            <div class="chat-tabs" id="chatTabs">
-                ${renderTabs()}
-                <div class="tabs-actions">
-                    <button class="tab-action-btn" id="newChatBtn" title="New chat">+</button>
-                    <button class="tab-action-btn" id="settingsBtn" title="Settings">⚙</button>
+            <!-- Header -->
+            <div class="continue-header">
+                <div class="header-left">
+                    <span class="header-title">LEXENTIA</span>
+                </div>
+                <div class="header-actions">
+                    <button class="header-btn" id="newChatBtn" title="New chat">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                    </button>
+                    <button class="header-btn" id="historyBtn" title="History">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                    </button>
+                    <button class="header-btn" id="settingsBtn" title="Settings">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                    </button>
+                    <button class="header-btn mode-btn" id="modeBtn" title="Agent Mode">
+                        <span id="modeIcon">🤖</span>
+                    </button>
+                    <div class="model-selector">
+                        <button class="model-selector-btn" id="modelSelectorBtn">
+                            <span>Local Config</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            <!-- Status Bar -->
+            <div class="status-bar hidden" id="statusBar">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span class="status-text" id="statusText">Ready</span>
+                <button class="status-stop hidden" id="stopBtn" title="Stop">■</button>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="continue-toolbar hidden" id="mainToolbar">
+                <button class="toolbar-btn" id="editModeBtn" title="Edit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                    </svg>
+                </button>
+                <button class="toolbar-btn" id="diffModeBtn" title="Diff">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="6" cy="6" r="3"/>
+                        <circle cx="6" cy="18" r="3"/>
+                        <line x1="20" y1="4" x2="8.12" y2="15.88"/>
+                        <line x1="14.47" y1="14.48" x2="20" y2="20"/>
+                        <line x1="8.12" y1="8.12" x2="12" y2="12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Context Chips -->
+            <div class="context-chips-container hidden" id="contextChipsContainer"></div>
+
+            <!-- Execution Timeline -->
+            <div class="execution-timeline hidden" id="executionTimeline"></div>
+
+            <!-- Messages -->
             <div class="messages" id="messages">
                 <div class="welcome-message">
                     <div class="welcome-logo">Lexentia</div>
-                    <div class="welcome-content">Connect a model in Settings and describe your task.</div>
+                    <div class="welcome-subtitle">AI Dev Engine</div>
+                    <div class="welcome-hint">Start typing to see smart actions</div>
                 </div>
             </div>
+
+            <!-- Diff Bar -->
             <div class="diff-bar hidden" id="diffBar">
                 <div class="diff-stats" id="diffStats"></div>
                 <div class="diff-btns">
@@ -31,25 +97,54 @@
                     <button class="diff-btn accept" id="acceptAllBtn">Accept all</button>
                 </div>
             </div>
-            <div class="input-footer">
-                <div class="input-row">
-                    <textarea id="messageInput" placeholder="Ask anything (Ctrl+L)" rows="1"></textarea>
-                    <div class="input-actions">
-                        <button class="input-icon-btn" id="attachBtn" title="Attach file">⊕</button>
-                        <button class="input-icon-btn send-btn" id="sendBtn" title="Send (Enter)">▲</button>
+
+            <!-- Action Chips (Progressive UI) -->
+            <div class="action-chips-container hidden" id="actionChipsContainer"></div>
+
+            <!-- Input Area -->
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea id="messageInput" placeholder="Ask anything. '@' to add context" rows="2"></textarea>
+                    <div class="input-toolbar">
+                        <div class="input-toolbar-left">
+                            <button class="input-btn at-btn" id="atBtn" title="Add context">@</button>
+                        </div>
+                        <div class="input-toolbar-right">
+                            <button class="input-btn" id="attachBtn" title="Attach file">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.59a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                                </svg>
+                            </button>
+                            <button class="send-btn" id="sendBtn" title="Send (Enter)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="22" y1="2" x2="11" y2="13"/>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <div class="statusbar-row">
-                    <div class="statusbar-left">
-                        <button class="statusbar-btn" id="modeBtn">&lt;&gt; Code</button>
-                    </div>
-                    <div class="statusbar-right"></div>
                 </div>
             </div>
+
+            <!-- Last Session -->
+            <div class="last-session" id="lastSessionBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"/>
+                </svg>
+                <span>Last Session</span>
+            </div>
+
+            <!-- Settings Panel -->
+            <div class="settings-backdrop" id="settingsBackdrop"></div>
             <div class="settings-panel" id="settingsPanel">
                 <div class="settings-header">
                     <h3>Settings</h3>
-                    <button class="close-settings" id="closeSettings">×</button>
+                    <button class="close-settings" id="closeSettings">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
                 </div>
                 <div class="setting">
                     <label>Model Preset</label>
@@ -78,19 +173,69 @@
                     <label>Custom System Prompt</label>
                     <textarea id="customSystemPrompt" rows="4" placeholder="Optional: override adaptive prompt per model"></textarea>
                 </div>
+                <div class="setting">
+                    <label>
+                        <input type="checkbox" id="streamingToggle"> Enable Streaming
+                    </label>
+                </div>
+
+                <!-- AI Capabilities -->
+                <div class="settings-section">
+                    <h4 class="settings-section-title">🧰 Tools</h4>
+                    <div class="setting-inline">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="terminalToggle">
+                            <span class="toggle-slider"></span>
+                            Terminal
+                        </label>
+                    </div>
+                    <div class="setting-inline">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="filesystemToggle">
+                            <span class="toggle-slider"></span>
+                            File System
+                        </label>
+                    </div>
+                    <div class="setting-inline">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="testsToggle">
+                            <span class="toggle-slider"></span>
+                            Tests
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Safety -->
+                <div class="settings-section">
+                    <h4 class="settings-section-title">🔒 Safety</h4>
+                    <div class="setting">
+                        <label>Max Iterations</label>
+                        <input type="number" id="maxIterations" value="3" min="1" max="10">
+                    </div>
+                    <div class="setting-inline">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="askBeforeRunToggle">
+                            <span class="toggle-slider"></span>
+                            Ask before run
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Profiles -->
+                <div class="settings-section">
+                    <h4 class="settings-section-title">⚡ Profiles</h4>
+                    <div class="profile-btns">
+                        <button class="profile-btn" data-profile="safe" id="profileSafe">Safe Mode</button>
+                        <button class="profile-btn active" data-profile="dev" id="profileDev">Dev Mode</button>
+                        <button class="profile-btn" data-profile="fullauto" id="profileFullAuto">Full Auto</button>
+                    </div>
+                </div>
+
                 <button class="save-settings-btn" id="saveSettingsBtn">Save</button>
             </div>
         `
         bindEvents()
         vscode.postMessage({ type: 'getSettings' })
-    }
-
-    function renderTabs() {
-        return tabs.map(t => `
-            <div class="tab ${t.active ? 'active' : ''}" data-id="${t.id}">
-                ${escapeHtml(t.title)}
-            </div>
-        `).join('')
     }
 
     function bindEvents() {
@@ -99,15 +244,156 @@
         const settingsBtn   = document.getElementById('settingsBtn')
         const closeSettings = document.getElementById('closeSettings')
         const settingsPanel = document.getElementById('settingsPanel')
+        const settingsBackdrop = document.getElementById('settingsBackdrop')
         const saveSettingsBtn = document.getElementById('saveSettingsBtn')
         const provider      = document.getElementById('provider')
         const modelPreset   = document.getElementById('modelPreset')
         const newChatBtn    = document.getElementById('newChatBtn')
         const rejectAllBtn  = document.getElementById('rejectAllBtn')
         const acceptAllBtn  = document.getElementById('acceptAllBtn')
-        const chatTabs      = document.getElementById('chatTabs')
         const attachBtn     = document.getElementById('attachBtn')
-        const modeBtn       = document.getElementById('modeBtn')
+        const atBtn         = document.getElementById('atBtn')
+        const lastSessionBtn = document.getElementById('lastSessionBtn')
+        const editModeBtn   = document.getElementById('editModeBtn')
+        const diffModeBtn   = document.getElementById('diffModeBtn')
+        const modelSelectorBtn = document.getElementById('modelSelectorBtn')
+        const modeBtn = document.getElementById('modeBtn')
+        const modeIcon = document.getElementById('modeIcon')
+        const stopBtn = document.getElementById('stopBtn')
+        let currentActionChips = []
+        let currentMode = 'agent'
+
+        // Mode selector
+        const modes = [
+            { id: 'plan', icon: '🧠', label: 'Plan', desc: 'Architecture' },
+            { id: 'code', icon: '👨‍💻', label: 'Code', desc: 'Implement' },
+            { id: 'debug', icon: '🐞', label: 'Debug', desc: 'Fix issues' },
+            { id: 'agent', icon: '🤖', label: 'Agent', desc: 'Auto mode' }
+        ]
+
+        function showModeSelector() {
+            // Create dropdown if not exists
+            let dropdown = document.getElementById('modeSelectorDropdown')
+            if (!dropdown) {
+                dropdown = document.createElement('div')
+                dropdown.id = 'modeSelectorDropdown'
+                dropdown.className = 'mode-selector-dropdown'
+                dropdown.innerHTML = modes.map(m => `
+                    <div class="mode-option ${m.id === currentMode ? 'active' : ''}" data-mode="${m.id}">
+                        <span class="mode-option-icon">${m.icon}</span>
+                        <span class="mode-option-label">${m.label}</span>
+                        <span class="mode-option-desc">${m.desc}</span>
+                    </div>
+                `).join('')
+                modeBtn.parentElement.appendChild(dropdown)
+
+                // Bind click handlers
+                dropdown.querySelectorAll('.mode-option').forEach(opt => {
+                    opt.addEventListener('click', () => {
+                        currentMode = opt.dataset.mode
+                        const mode = modes.find(m => m.id === currentMode)
+                        if (modeIcon && mode) {
+                            modeIcon.textContent = mode.icon
+                        }
+                        dropdown.classList.remove('visible')
+                        vscode.postMessage({ type: 'setMode', mode: currentMode })
+                    })
+                })
+            }
+
+            // Toggle visibility
+            dropdown.classList.toggle('visible')
+        }
+
+        modeBtn?.addEventListener('click', () => {
+            showModeSelector()
+        })
+
+        // Stop button
+        stopBtn?.addEventListener('click', () => {
+            vscode.postMessage({ type: 'stopTask' })
+            stopBtn?.classList.add('hidden')
+            updateStatus('idle', 'Stopped')
+        })
+
+        // Action chips handler - dynamic UI
+        function showActionChips(actions, contextInput = '') {
+            const container = document.getElementById('actionChipsContainer')
+            if (!container || !actions || actions.length === 0) {
+                container?.classList.add('hidden')
+                return
+            }
+
+            currentActionChips = actions
+            container.innerHTML = actions.map(action => `
+                <button class="action-chip ${action.type}" data-trigger="${action.trigger}" title="${action.condition || ''}">
+                    <span class="action-chip-icon">${action.icon || '•'}</span>
+                    <span>${action.label}</span>
+                </button>
+            `).join('')
+
+            // Bind click handlers
+            container.querySelectorAll('.action-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const trigger = chip.dataset.trigger
+                    handleActionTrigger(trigger, contextInput)
+                })
+            })
+
+            container.classList.remove('hidden')
+        }
+
+        function handleActionTrigger(trigger, contextInput) {
+            const input = document.getElementById('messageInput')
+            const task = contextInput || input?.value.trim() || ''
+
+            switch (trigger) {
+                case 'runTask':
+                case 'fixLoop':
+                    if (!task) return
+                    // Show status bar and timeline
+                    document.getElementById('statusBar')?.classList.remove('hidden')
+                    document.getElementById('executionTimeline')?.classList.remove('hidden')
+                    document.getElementById('messages')?.classList.add('hidden')
+                    stopBtn?.classList.remove('hidden')
+                    clearExecutionTimeline()
+                    addTimelineItem('plan', '🧠 Starting task...', task)
+                    vscode.postMessage({ type: 'runTask', task })
+                    break
+
+                case 'runProject':
+                case 'runTests':
+                    vscode.postMessage({ type: 'runProject', command: trigger === 'runTests' ? 'test' : 'run' })
+                    break
+
+                case 'explainError':
+                case 'explainCode':
+                    if (task) {
+                        vscode.postMessage({ type: 'sendMessage', text: `Explain: ${task}` })
+                    }
+                    break
+
+                case 'showPlan':
+                    if (task) {
+                        vscode.postMessage({ type: 'showPlan', task })
+                    }
+                    break
+            }
+
+            // Hide chips after action
+            document.getElementById('actionChipsContainer')?.classList.add('hidden')
+        }
+
+        // Request intent analysis on input
+        function requestIntentAnalysis() {
+            const input = document.getElementById('messageInput')
+            const text = input?.value.trim()
+            if (text && text.length > 3) {
+                vscode.postMessage({ type: 'analyzeIntent', text })
+            } else {
+                document.getElementById('actionChipsContainer')?.classList.add('hidden')
+            }
+        }
 
         sendBtn?.addEventListener('click', sendMessage)
 
@@ -118,34 +404,77 @@
             }
         })
 
+        // Analyze intent on input (Progressive UI)
+        let intentDebounceTimer
         messageInput?.addEventListener('input', function () {
             this.style.height = 'auto'
             this.style.overflowY = 'hidden'
             const newH = Math.min(this.scrollHeight, 120)
             this.style.height = newH + 'px'
             this.style.overflowY = this.scrollHeight > 120 ? 'auto' : 'hidden'
+
+            // Debounce intent analysis
+            clearTimeout(intentDebounceTimer)
+            intentDebounceTimer = setTimeout(() => {
+                requestIntentAnalysis()
+            }, 300)
         })
 
+        function openSettings() {
+            settingsPanel?.classList.add('visible')
+            settingsBackdrop?.classList.add('visible')
+        }
+
+        function closeSettingsPanel() {
+            settingsPanel?.classList.remove('visible')
+            settingsBackdrop?.classList.remove('visible')
+        }
+
         settingsBtn?.addEventListener('click', () => {
-            settingsPanel?.classList.toggle('visible')
+            openSettings()
         })
 
         closeSettings?.addEventListener('click', () => {
-            settingsPanel?.classList.remove('visible')
+            closeSettingsPanel()
         })
 
-        // close settings on outside click
-        document.addEventListener('click', (e) => {
-            if (settingsPanel?.classList.contains('visible')) {
-                if (!settingsPanel.contains(e.target) && e.target !== settingsBtn) {
-                    settingsPanel.classList.remove('visible')
-                }
-            }
+        settingsBackdrop?.addEventListener('click', () => {
+            closeSettingsPanel()
         })
 
         provider?.addEventListener('change', (e) => {
             const apiKeyRow = document.getElementById('apiKeyRow')
             apiKeyRow.style.display = e.target.value === 'openai-compatible' ? 'block' : 'none'
+        })
+
+        // Profile buttons
+        const profileBtns = document.querySelectorAll('.profile-btn')
+        let selectedProfile = 'dev'
+        profileBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                profileBtns.forEach(b => b.classList.remove('active'))
+                btn.classList.add('active')
+                selectedProfile = btn.dataset.profile
+
+                // Auto-set permissions based on profile
+                const terminalToggle = document.getElementById('terminalToggle')
+                const filesystemToggle = document.getElementById('filesystemToggle')
+                const testsToggle = document.getElementById('testsToggle')
+
+                if (selectedProfile === 'safe') {
+                    terminalToggle.checked = false
+                    filesystemToggle.checked = true
+                    testsToggle.checked = false
+                } else if (selectedProfile === 'dev') {
+                    terminalToggle.checked = true
+                    filesystemToggle.checked = true
+                    testsToggle.checked = true
+                } else if (selectedProfile === 'fullauto') {
+                    terminalToggle.checked = true
+                    filesystemToggle.checked = true
+                    testsToggle.checked = true
+                }
+            })
         })
 
         saveSettingsBtn?.addEventListener('click', () => {
@@ -155,8 +484,25 @@
             const apiKey  = document.getElementById('apiKey')?.value
             const preset  = document.getElementById('modelPreset')?.value || 'custom'
             const customSystemPrompt = document.getElementById('customSystemPrompt')?.value || ''
-            vscode.postMessage({ type: 'saveSettings', settings: { modelPreset: preset, provider: prov, baseUrl, model, apiKey, customSystemPrompt } })
-            settingsPanel?.classList.remove('visible')
+            const streaming = document.getElementById('streamingToggle')?.checked || false
+
+            // Tools & Safety
+            const tools = {
+                terminal: document.getElementById('terminalToggle')?.checked || false,
+                filesystem: document.getElementById('filesystemToggle')?.checked || false,
+                tests: document.getElementById('testsToggle')?.checked || false
+            }
+            const safety = {
+                maxIterations: parseInt(document.getElementById('maxIterations')?.value || '3'),
+                askBeforeRun: document.getElementById('askBeforeRunToggle')?.checked || false,
+                profile: selectedProfile
+            }
+
+            vscode.postMessage({
+                type: 'saveSettings',
+                settings: { modelPreset: preset, provider: prov, baseUrl, model, apiKey, customSystemPrompt, streaming, tools, safety }
+            })
+            closeSettingsPanel()
         })
 
         modelPreset?.addEventListener('change', () => {
@@ -174,11 +520,8 @@
             providerEl?.dispatchEvent(new Event('change'))
         })
 
+        // New chat - just clear messages
         newChatBtn?.addEventListener('click', () => {
-            const id = nextTabId++
-            // deactivate all
-            tabs.forEach(t => t.active = false)
-            tabs.push({ id, title: `Chat ${id}`, active: true })
             messages = []
             pendingChanges = { files: 0, added: 0, removed: 0 }
             updateDiffBar()
@@ -201,24 +544,31 @@
             vscode.postMessage({ type: 'attachFile' })
         })
 
-        modeBtn?.addEventListener('click', () => {
-            const isCodeMode = modeBtn.textContent?.includes('Code')
-            modeBtn.textContent = isCodeMode ? 'Ask' : '<> Code'
+        // Toolbar buttons
+        atBtn?.addEventListener('click', () => {
+            const input = document.getElementById('messageInput')
+            if (input) {
+                input.value += '@'
+                input.focus()
+            }
         })
 
-        chatTabs?.addEventListener('click', (e) => {
-            const tab = e.target.closest('.tab')
-            if (tab) {
-                const id = parseInt(tab.dataset.id)
-                tabs.forEach(t => t.active = t.id === id)
-                // re-render tabs area only
-                const tabsContainer = document.getElementById('chatTabs')
-                if (tabsContainer) {
-                    const actions = tabsContainer.querySelector('.tabs-actions')
-                    tabsContainer.innerHTML = renderTabs()
-                    tabsContainer.appendChild(actions)
-                }
-            }
+        lastSessionBtn?.addEventListener('click', () => {
+            vscode.postMessage({ type: 'loadLastSession' })
+        })
+
+        editModeBtn?.addEventListener('click', () => {
+            editModeBtn.classList.toggle('active')
+            vscode.postMessage({ type: 'toggleEditMode', enabled: editModeBtn.classList.contains('active') })
+        })
+
+        diffModeBtn?.addEventListener('click', () => {
+            diffModeBtn.classList.toggle('active')
+            vscode.postMessage({ type: 'toggleDiffMode', enabled: diffModeBtn.classList.contains('active') })
+        })
+
+        modelSelectorBtn?.addEventListener('click', () => {
+            openSettings()
         })
 
         root?.addEventListener('click', async (e) => {
@@ -237,8 +587,8 @@
                 if (!text) return
                 try {
                     await navigator.clipboard.writeText(text)
-                    target.textContent = '✓'
-                    setTimeout(() => { target.textContent = '⧉' }, 1200)
+                    target.textContent = '&#10003;'
+                    setTimeout(() => { target.textContent = '&#10629;' }, 1200)
                 } catch {
                     vscode.postMessage({ type: 'notify', level: 'error', text: 'Failed to copy text' })
                 }
@@ -405,6 +755,101 @@
         return div.innerHTML
     }
 
+    function renderContextChips(chips) {
+        const container = document.getElementById('contextChipsContainer')
+        if (!container) return
+
+        if (!chips || chips.length === 0) {
+            container.classList.add('hidden')
+            container.innerHTML = ''
+            return
+        }
+
+        const chipIcons = {
+            file: '📄',
+            symbol: '⚡',
+            terminal_error: '❌',
+            selection: '✂️',
+            rag_result: '🔍',
+            memory: '🧠'
+        }
+
+        container.innerHTML = chips.map(chip => `
+            <div class="context-chip ${chip.type}" title="${escapeHtml(chip.label)}">
+                <span class="context-chip-icon">${chipIcons[chip.type] || '•'}</span>
+                <span>${escapeHtml(chip.label)}</span>
+            </div>
+        `).join('')
+
+        container.classList.remove('hidden')
+    }
+
+    // === Execution Timeline ===
+    function clearExecutionTimeline() {
+        const timeline = document.getElementById('executionTimeline')
+        if (timeline) timeline.innerHTML = ''
+    }
+
+    function addTimelineItem(type, title, details = '') {
+        const timeline = document.getElementById('executionTimeline')
+        if (!timeline) return
+
+        const icons = {
+            plan: '🧠',
+            edit: '✏️',
+            run: '🧪',
+            error: '❌',
+            fix: '🔧',
+            success: '✅',
+            info: 'ℹ️'
+        }
+
+        const item = document.createElement('div')
+        item.className = `timeline-item ${type}`
+        item.innerHTML = `
+            <div class="timeline-icon">${icons[type] || '•'}</div>
+            <div class="timeline-content">
+                <div class="timeline-title">${title}</div>
+                ${details ? `<div class="timeline-details">${details}</div>` : ''}
+            </div>
+        `
+        timeline.appendChild(item)
+        timeline.scrollTop = timeline.scrollHeight
+    }
+
+    function updateStatus(status, text) {
+        const statusBar = document.getElementById('statusBar')
+        const indicator = document.getElementById('statusIndicator')
+        const statusText = document.getElementById('statusText')
+        
+        if (!statusBar || !indicator || !statusText) return
+
+        statusBar.classList.remove('hidden')
+        statusText.textContent = text
+
+        const statusClasses = {
+            idle: '',
+            collecting: 'status-working',
+            planning: 'status-working',
+            executing: 'status-working',
+            running: 'status-running',
+            parsing_error: 'status-error',
+            fixing: 'status-working',
+            success: 'status-success',
+            error: 'status-error',
+            max_iterations: 'status-warning'
+        }
+
+        indicator.className = 'status-indicator ' + (statusClasses[status] || '')
+    }
+
+    window.openSettings = function() {
+        const settingsPanel = document.getElementById('settingsPanel')
+        const settingsBackdrop = document.getElementById('settingsBackdrop')
+        settingsPanel?.classList.add('visible')
+        settingsBackdrop?.classList.add('visible')
+    }
+
     window.addEventListener('message', (event) => {
         const msg = event.data
         switch (msg.type) {
@@ -414,10 +859,14 @@
                 messages.push({ role: 'thinking', content: msg.content, seconds: msg.seconds })
                 renderMessages()
                 break
+            case 'contextChips':
+                renderContextChips(msg.chips)
+                break
             case 'response':
                 messages = messages.filter(m => m.role !== 'thinking')
                 messages.push({ role: 'assistant', content: msg.content })
                 renderMessages()
+                renderContextChips([])
                 break
             case 'error':
                 messages = messages.filter(m => m.role !== 'thinking')
@@ -432,6 +881,23 @@
                 }
                 updateDiffBar()
                 break
+            case 'taskStatus':
+                updateStatus(msg.status, msg.text)
+                if (msg.status === 'success' || msg.status === 'error' || msg.status === 'max_iterations') {
+                    document.getElementById('stopBtn')?.classList.add('hidden')
+                }
+                break
+            case 'executionLog':
+                addTimelineItem(msg.logType, msg.title, msg.details)
+                break
+            case 'intentAnalysis':
+                // Progressive UI: show action chips based on intent
+                if (msg.actions && msg.actions.length > 0) {
+                    showActionChips(msg.actions, msg.input)
+                } else {
+                    document.getElementById('actionChipsContainer')?.classList.add('hidden')
+                }
+                break
             case 'settings':
                 const s = msg.settings
                 const providerEl  = document.getElementById('provider')
@@ -441,6 +907,7 @@
                 const apiKeyRow   = document.getElementById('apiKeyRow')
                 const presetEl    = document.getElementById('modelPreset')
                 const customPromptEl = document.getElementById('customSystemPrompt')
+                const streamingToggle = document.getElementById('streamingToggle')
                 const presets = Array.isArray(s.modelPresets) ? s.modelPresets : []
                 if (presetEl) {
                     presetEl._presets = presets
@@ -455,6 +922,7 @@
                 if (modelEl)    modelEl.value    = s.model    || 'llama3.1'
                 if (apiKeyEl)   apiKeyEl.value   = s.apiKey   || ''
                 if (customPromptEl) customPromptEl.value = s.customSystemPrompt || ''
+                if (streamingToggle) streamingToggle.checked = s.streaming || false
                 if (apiKeyRow)  apiKeyRow.style.display = s.provider === 'openai-compatible' ? 'block' : 'none'
                 break
             case 'toolResult':
@@ -464,6 +932,33 @@
                     lastMsg.toolResults.push(msg)
                     renderMessages()
                 }
+                break
+            case 'streamChunk':
+                if (!isStreaming) {
+                    isStreaming = true
+                    streamingContent = ''
+                    messages = messages.filter(m => m.role !== 'thinking')
+                    messages.push({ role: 'assistant', content: '', isStreaming: true })
+                }
+                streamingContent += msg.content || ''
+                const streamMsg = messages[messages.length - 1]
+                if (streamMsg && streamMsg.isStreaming) {
+                    streamMsg.content = streamingContent
+                    renderMessages()
+                }
+                break
+            case 'streamDone':
+                isStreaming = false
+                const doneMsg = messages[messages.length - 1]
+                if (doneMsg && doneMsg.isStreaming) {
+                    delete doneMsg.isStreaming
+                }
+                streamingContent = ''
+                break
+            case 'clearHistory':
+                messages = []
+                renderMessages()
+                renderApp()
                 break
             case 'insertText':
                 const input = document.getElementById('messageInput')

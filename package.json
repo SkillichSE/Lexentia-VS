@@ -38,6 +38,31 @@
         "command": "lexentia.newTerminal",
         "title": "new terminal",
         "category": "lexentia"
+      },
+      {
+        "command": "lexentia.exportAuditLog",
+        "title": "export audit log",
+        "category": "lexentia"
+      },
+      {
+        "command": "lexentia.exportAiActions",
+        "title": "export ai actions timeline",
+        "category": "lexentia"
+      },
+      {
+        "command": "lexentia.toggleAuditLog",
+        "title": "toggle audit logging",
+        "category": "lexentia"
+      },
+      {
+        "command": "lexentia.toggleAutocomplete",
+        "title": "toggle autocomplete",
+        "category": "lexentia"
+      },
+      {
+        "command": "lexentia.inlineEdit",
+        "title": "inline edit",
+        "category": "lexentia"
       }
     ],
     "views": {
@@ -73,39 +98,102 @@
         }
       ]
     },
+    "keybindings": [
+      {
+        "command": "lexentia.inlineEdit",
+        "key": "ctrl+i",
+        "mac": "cmd+i",
+        "when": "editorTextFocus"
+      }
+    ],
     "configuration": {
       "title": "lexentia",
       "properties": {
-        "lexentia.model.provider": {
-          "type": "string",
-          "enum": ["ollama", "openai-compatible"],
-          "default": "ollama",
-          "description": "model provider"
+        "lexentia.models": {
+          "type": "array",
+          "default": [
+            {
+              "provider": "ollama",
+              "model": "llama3.1",
+              "apiKey": "",
+              "apiBaseUrl": "http://127.0.0.1:11434"
+            }
+          ],
+          "description": "array of model configurations"
         },
-        "lexentia.model.baseUrl": {
+        "lexentia.roles.chat": {
           "type": "string",
-          "default": "http://127.0.0.1:11434",
-          "description": "base url for model api"
+          "default": "0",
+          "description": "index of model for chat (complex reasoning, >32k context)"
         },
-        "lexentia.model.name": {
+        "lexentia.roles.autocomplete": {
           "type": "string",
-          "default": "llama3.1",
-          "description": "model name"
+          "default": "0",
+          "description": "index of model for autocomplete (low latency, FIM support)"
         },
-        "lexentia.model.apiKey": {
+        "lexentia.roles.embeddings": {
           "type": "string",
-          "default": "",
-          "description": "api key for openai-compatible providers"
+          "default": "0",
+          "description": "index of model for embeddings"
         },
-        "lexentia.model.modelPreset": {
-          "type": "string",
-          "default": "custom",
-          "description": "predefined model preset id"
+        "lexentia.autocomplete.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "enable tab autocomplete"
         },
-        "lexentia.model.customSystemPrompt": {
+        "lexentia.autocomplete.debounceMs": {
+          "type": "number",
+          "default": 250,
+          "description": "debounce delay in milliseconds for autocomplete"
+        },
+        "lexentia.autocomplete.maxContextTokens": {
+          "type": "number",
+          "default": 2000,
+          "description": "maximum context tokens for autocomplete"
+        },
+        "lexentia.rag.chunkSize": {
+          "type": "number",
+          "default": 750,
+          "description": "chunk size for RAG indexing (tokens)"
+        },
+        "lexentia.rag.chunkOverlap": {
+          "type": "number",
+          "default": 100,
+          "description": "chunk overlap for RAG indexing (tokens)"
+        },
+        "lexentia.rag.vectorStore": {
           "type": "string",
-          "default": "",
-          "description": "optional custom system prompt override"
+          "enum": ["memory", "sqlite"],
+          "default": "memory",
+          "description": "vector store backend for RAG"
+        },
+        "lexentia.security.localOnly": {
+          "type": "boolean",
+          "default": false,
+          "description": "use only local models (Ollama)"
+        },
+        "lexentia.security.disableTelemetry": {
+          "type": "boolean",
+          "default": true,
+          "description": "disable all telemetry and external data sending"
+        },
+        "lexentia.customCommands": {
+          "type": "array",
+          "default": [
+            {
+              "name": "refactor",
+              "prompt": "Refactor this code to improve readability and performance."
+            },
+            {
+              "name": "test",
+              "prompt": "Generate unit tests for this code."
+            },
+            {
+              "name": "explain",
+              "prompt": "Explain this code in detail."
+            }
+          ],
+          "description": "custom slash commands with their prompts"
         }
       }
     }
